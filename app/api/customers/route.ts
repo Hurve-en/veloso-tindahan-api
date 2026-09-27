@@ -6,18 +6,18 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { name, balance } = await request.json();
+  const { name, balance } = await request.json(); // reads json sent by client
 
-  const row = {
+  const row = { //new row
     id: String(Date.now()),
     name,
     balance,
     lastPaid: "never",
   };
 
-  ROWS.push(row);
+  ROWS.push(row);// add to new row push()
 
-  return NextResponse.json(row, { status: 201 });
+  return NextResponse.json(row, { status: 201 }); //send new row back 201 means successful
 }
 
 /*
