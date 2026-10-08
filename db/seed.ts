@@ -14,4 +14,5 @@ async function seed() {
   console.log("Seeded customers");
   process.exit(0);
 }
+
 seed();

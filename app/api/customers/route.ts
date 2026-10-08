@@ -1,35 +1,29 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { customers } from "@/db/schema";
+import { readCustomers } from "@/lib/customers";
+import { CustomerSchema } from "@/lib/definitions";
+import { getProfile } from "@/lib/auth";
 
-export async function GET() {
-  return NextResponse.json(await db.select().from(customers));
+export async function GET(request: Request) {
+  const profile = await getProfile(request);
+  if (!profile) return new NextResponse("", { status: 401 });
+  return NextResponse.json(await readCustomers());
 }
 
 export async function POST(request: Request) {
-  const { name, balance } = await request.json();
-  const [row] = await db
-    .insert(customers)
-    .values({ name, balance })
-    .returning();
+  const profile = await getProfile(request);
+  if (!profile) return new NextResponse("", { status: 401 });
+  if (profile.role !== "admin") return new NextResponse("", { status: 403 });
+  const parsed = CustomerSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      { message: parsed.error.issues[0].message },
+      { status: 400 },
+    );
+  }
+  const [row] = await db.insert(customers).values(parsed.data).returning();
   return NextResponse.json(row, { status: 201 });
 }
-
-/*
-    for temporary slowing down API to test loading state
-
-    to slow down: 
-
-    export async function GET() {
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  return NextResponse.json(ROWS);
-}
-
-    original:
-
-    export async function GET() {
-  return NextResponse.json(ROWS);
-}
-
-*/
